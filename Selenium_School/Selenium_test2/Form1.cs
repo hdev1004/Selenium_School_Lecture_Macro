@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,6 +23,7 @@ namespace Selenium_School
         BackgroundWorker bw3 = new BackgroundWorker();
         BackgroundWorker bw4 = new BackgroundWorker();
 
+        List<int> shutdownTime = new List<int>();
         List<int> ClassMinArr = new List<int>();
         List<int> ClassMaxArr = new List<int>();
         List<String> EclassLink = new List<String>();
@@ -195,6 +197,7 @@ namespace Selenium_School
                 MessageBox.Show("이미 실행 중 입니다.");
         }
 
+        //강의 듣기 
         private void backgroundWorker3_DoWork(object sender, DoWorkEventArgs e)
         {
             // 창크기 값이 없는 경우
@@ -207,9 +210,17 @@ namespace Selenium_School
             Thread.Sleep(500);
 
             var courseId = new object();
+            var lectureState = new Object();
+            var listBoxNum = new Object();
+            var trNum = new Object();
+            var studyMin = new Object();
+            var studing_Min = new Object();
+            int studyLeave_Min = 0;
+
             try
             {
-                courseId = js.ExecuteScript("return document.querySelector(\"frame\").contentWindow.document.querySelector(\"frame\").contentWindow.document.querySelector(\"#headerContent > h1 > a\").attributes.href.textContent.split(\"courseId=\")[1];");
+                courseId = js.ExecuteScript("return document.querySelector(\"#headerContent > h1 > a\").attributes.href.textContent.split(\"courseId=\")[1];");
+
             }
             catch
             {
@@ -217,30 +228,31 @@ namespace Selenium_School
                 return;
             }
 
+            
             js.ExecuteScript(
                 "var script = document.createElement('script');\n" +
                 "script.src = 'http://cyber.mjc.ac.kr/lmsdata/js/jquery-1.11.1.min.js';\n" +
                 "script.type = 'text/javascript';\n" +
                 "document.getElementsByTagName('head')[0].appendChild(script);\n" +
-
-                "customData = document.querySelector(\"frame\").contentWindow.document.querySelector(\"frame\").contentWindow.customData\n" +
-                "API_1484_11 = document.querySelector(\"frame\").contentWindow.document.querySelector(\"frame\").contentWindow.API_1484_11;\n" +
-                "window.selectedLessonItemId = document.querySelector(\"frame\").contentWindow.document.querySelector(\"frame\").contentWindow.selectedLessonItemId;\n" +
-                "window.studyWindow = document.querySelector(\"frame\").contentWindow.document.querySelector(\"frame\").contentWindow.studyWindow;\n" +
-                "window.learningControl = document.querySelector(\"frame\").contentWindow.document.querySelector(\"frame\").contentWindow.learningControl;\n" +
-                "window.befContStudyYn = document.querySelector(\"frame\").contentWindow.document.querySelector(\"frame\").contentWindow.befContStudyYn;\n" +
-                "window.curContStudyYn = document.querySelector(\"frame\").contentWindow.document.querySelector(\"frame\").contentWindow.curContStudyYn;\n" +
-                "window.C4Enable = document.querySelector(\"frame\").contentWindow.document.querySelector(\"frame\").contentWindow.C4Enable;\n" +
-                "window.C5Enable = document.querySelector(\"frame\").contentWindow.document.querySelector(\"frame\").contentWindow.C5Enable;\n" +
-                "window.attendYn = document.querySelector(\"frame\").contentWindow.document.querySelector(\"frame\").contentWindow.attendYn;\n" +
-                "window.curLessonElementId = document.querySelector(\"frame\").contentWindow.document.querySelector(\"frame\").contentWindow.curLessonElementId;\n" +
-                "window.curScoId = document.querySelector(\"frame\").contentWindow.document.querySelector(\"frame\").contentWindow.curScoId;\n" +
-
+                
+                "customData = window.customData\n" +
+                "API_1484_11 = window.API_1484_11;\n" +
+                "window.selectedLessonItemId = window.selectedLessonItemId;\n" +
+                "window.studyWindow = window.studyWindow;\n" +
+                "window.learningControl = window.learningControl;\n" +
+                "window.befContStudyYn = window.befContStudyYn;\n" +
+                "window.curContStudyYn = window.curContStudyYn;\n" +
+                "window.C4Enable = window.C4Enable;\n" +
+                "window.C5Enable = window.C5Enable;\n" +
+                "window.attendYn = window.attendYn;\n" +
+                "window.curLessonElementId = window.curLessonElementId;\n" +
+                "window.curScoId = window.curScoId;\n" +
+                
 
                 "window.lessonObject = new Object();\n" +
                 "window.courseDTO = new Object();\n"
             );
-
+           
             js.ExecuteScript(
                 "window.test = function() {" +
                     "alert(\"123\")" +
@@ -279,7 +291,7 @@ namespace Selenium_School
                         "studyWindow = window.open(url);\n" +
                         "studyWindow.open = true\n" +
                     "}"
-        );
+                    );
             js.ExecuteScript(
                     "window.viewStudyContents = function(lessonElementId, lessonContentsId, windowWidth, windowHeight, learningControl, lessonCnt){" +
 
@@ -295,57 +307,59 @@ namespace Selenium_School
                     "certificationCompleted();\n" +
                 "}\n\n"
             );
+            int idx = 0, idx2 = 0, studyIndex = 0;
+            var link = new Object();
 
-            var EclassLinkCountScript = js.ExecuteScript(
-                "return document.querySelector(\"frame\").contentWindow.document.querySelector(\"frame\").contentWindow.document.querySelectorAll(\".btn-orange\").length;"
-            );
-            EclassLinkCount = Convert.ToInt32(EclassLinkCountScript);
-            if (EclassLinkCount == 0)
+            listBoxNum = js.ExecuteScript("return document.querySelectorAll(\"#listBox\").length;");
+            for(idx = 0; idx < Convert.ToInt32(listBoxNum); idx ++)
             {
-                button2.Enabled = true;
-                return;
-            }
-            String _Message = "";
-
-            for (int idx = 0; idx < EclassLinkCount; idx++)
-            {
-                var ClassMin = js.ExecuteScript(
-                   "window.sp = document.querySelector(\"frame\").contentWindow.document.querySelector(\"frame\").contentWindow.document.querySelectorAll(\".btn-orange\")[" + idx + "].parentElement.parentElement.querySelector(\".bar\").textContent.trim().split(\"분\");\n" +
-                   "if(sp.length == 3) {" +
-                        "return 0;" +
-                   "}" +
-                   "return sp[0].substring(1, sp[0].length);"
-                );
-                var ClassMax = js.ExecuteScript(
-                   "window.sp = document.querySelector(\"frame\").contentWindow.document.querySelector(\"frame\").contentWindow.document.querySelectorAll(\".btn-orange\")[" + idx + "].parentElement.parentElement.querySelector(\".bar\").textContent.trim().split(\"분\");\n" +
-                   "return sp[sp.length - 2].trim().substring(2,sp[sp.length - 2].length);"
-                );
-                //MessageBox.Show(ClassMin + "/" + ClassMax);
-
-                var Temp = js.ExecuteScript(
-                    "return document.querySelector(\"frame\").contentWindow.document.querySelector(\"frame\").contentWindow.document.querySelectorAll(\".btn-orange\")[" + idx + "].getAttribute(\"href\");"
-                );
-                EclassLink.Add(Temp.ToString());
-                _Message += EclassLink[idx] + "\n";
-
-                if (Convert.ToInt32(ClassMax) != 1)
+                trNum = js.ExecuteScript("return document.querySelectorAll(\"#listBox\")[0].querySelectorAll(\"tr\").length;");
+                for(idx2 = 1; idx2 < Convert.ToInt32(trNum); idx2 ++)
                 {
-                    js.ExecuteScript(EclassLink[idx]); //실행
-                    Thread.Sleep(200);
+                    lectureState = js.ExecuteScript(
+                        "var dump = document.querySelectorAll(\"#listBox\")[" + idx + "].querySelectorAll(\"tr\")[" + idx2 + "].querySelectorAll(\"td\")[3].querySelector(\"img\").attributes.src.textContent.split(\"set1/\")[1];" +
+                        "return dump");
 
-                    ClassMinArr.Add(Convert.ToInt32(ClassMin));
-                    ClassMaxArr.Add(Convert.ToInt32(ClassMax));
+                    studyMin = js.ExecuteScript(
+                        "return document.querySelectorAll(\"#listBox\")[" + idx + "].querySelectorAll(\"tr\")[" + idx2 + "].querySelectorAll(\"td\")[4].textContent.trim().split(\"분\")[0];"
+                        );
 
-                    index++;
+                    studing_Min = js.ExecuteScript(
+                        "return document.querySelectorAll(\"#listBox\")[" + idx + "].querySelectorAll(\"tr\")[" + idx2 + "].querySelectorAll(\"td\")[5].querySelector(\".f14\").textContent.trim().split(\" \")[2].split(\"분\")[0];"
+                        );
+
+                    if(Convert.ToInt32(studyMin) == 1)
+                    {
+                        js.ExecuteScript("console.log(\"설문조사\");");
+                        studyIndex++;
+                        continue;
+                    }
+                    studyLeave_Min = Convert.ToInt32(studyMin) - Convert.ToInt32(studing_Min) + 2;
+
+
+                    if (lectureState.ToString().Equals("icon_full_print.gif"))
+                    {
+                        js.ExecuteScript("console.log(\"O\");");
+                    } else
+                    {
+                        js.ExecuteScript("console.log(\"X : " + studyLeave_Min + " : " + studyIndex + "\");");
+                        shutdownTime.Add(studyLeave_Min);
+                        link = js.ExecuteScript("return document.querySelectorAll(\"td.last .btn-group\")[" + studyIndex + "].querySelector(\".btn\").attributes.href.textContent");
+                        js.ExecuteScript(link.ToString());
+                    }
+                    studyIndex++;
                 }
+                //다 들었을 때
+
             }
 
-            Thread.Sleep(1000);
 
             button2.Enabled = true;
             button3.Enabled = true;
         }
 
+
+        //종료 방지 적용
         private void backgroundWorker4_DoWork(object sender, DoWorkEventArgs e)
         {
             IJavaScriptExecutor js;
@@ -389,8 +403,8 @@ namespace Selenium_School
                         "}\n" +
                         "\n" +
                         "//ex) shutdown(15); 15분 뒤에 종료\n" +
-                    "console.log(\"" + ClassMaxArr[handles.Count - idx - 1] + ":" + ClassMinArr[handles.Count - idx - 1] + "\");\n" +
-                    "shutdown(" + (ClassMaxArr[handles.Count - idx - 1] - ClassMinArr[handles.Count - idx - 1] + 2) + ");\n"
+                    //"console.log(\"" + ClassMaxArr[handles.Count - idx - 1] + ":" + ClassMinArr[handles.Count - idx - 1] + "\");\n" +
+                    "shutdown(" + shutdownTime[handles.Count - idx - 1] + ");\n"
 
                  );
                 Thread.Sleep(1500);
