@@ -49,8 +49,8 @@ namespace Selenium_School
 
             listView1.View = View.Details;
             listView1.BeginUpdate();
-            textBox1.Text = "2019671062";
-            textBox2.Text = "P@ssw0rdadds";
+            textBox1.Text = "2020771001";
+            textBox2.Text = "*rlawownd2";
         }
         private void ExecuteScript(IJavaScriptExecutor driver, string script)
         {
@@ -313,7 +313,7 @@ namespace Selenium_School
             listBoxNum = js.ExecuteScript("return document.querySelectorAll(\"#listBox\").length;");
             for(idx = 0; idx < Convert.ToInt32(listBoxNum); idx ++)
             {
-                trNum = js.ExecuteScript("return document.querySelectorAll(\"#listBox\")[0].querySelectorAll(\"tr\").length;");
+                trNum = js.ExecuteScript("return document.querySelectorAll(\"#listBox\")[" + idx + "].querySelectorAll(\"tr\").length;");
                 for(idx2 = 1; idx2 < Convert.ToInt32(trNum); idx2 ++)
                 {
                     lectureState = js.ExecuteScript(
@@ -325,7 +325,9 @@ namespace Selenium_School
                         );
 
                     studing_Min = js.ExecuteScript(
-                        "return document.querySelectorAll(\"#listBox\")[" + idx + "].querySelectorAll(\"tr\")[" + idx2 + "].querySelectorAll(\"td\")[5].querySelector(\".f14\").textContent.trim().split(\" \")[2].split(\"분\")[0];"
+                        "var test = document.querySelectorAll(\"#listBox\")[" + idx + "].querySelectorAll(\"tr\")[" + idx2 + "].querySelectorAll(\"td\")[5].querySelector(\".f14\").textContent.trim().split(\" \")[2].split(\"분\")[0];" +
+                        "if(test.indexOf(\"초\") != -1) { return \"0\";} " + 
+                        "else return test;"
                         );
 
                     if(Convert.ToInt32(studyMin) == 1)
@@ -346,13 +348,13 @@ namespace Selenium_School
                         shutdownTime.Add(studyLeave_Min);
                         link = js.ExecuteScript("return document.querySelectorAll(\"td.last .btn-group\")[" + studyIndex + "].querySelector(\".btn\").attributes.href.textContent");
                         js.ExecuteScript(link.ToString());
+                        js.ExecuteScript("console.log(\"" + link.ToString() + "\");");
                     }
                     studyIndex++;
                 }
                 //다 들었을 때
 
             }
-
 
             button2.Enabled = true;
             button3.Enabled = true;
